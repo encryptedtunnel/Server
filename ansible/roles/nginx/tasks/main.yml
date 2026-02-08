@@ -1,0 +1,56 @@
+
+- name: Install Packages
+  ansible.builtin.apt:
+    update_cache: yes
+    name: "{{ item  }}"
+    state: latest
+  loop:
+    - "{{ NGINX_PKGS_LIST }}"
+  
+- name: configure frontend
+  include_tasks: frontend_nginx.yml
+
+- name: configure backend
+  include_tasks: backend_nginx.yml
+
+- name: Obtain SSL certificate
+  ansible.builtin.command: |
+    certbot certonly \
+    --webroot \
+    -w {{ WEB_ROOT }} \
+    -d {{ DOMAIN }} \
+    --non-interactive \
+    --agree-tos \
+    -m {{ EMAIL }} 
+  args:
+    creates: /etc/letsencrypt/live/{{ DOMAIN }}/fullchain.pem
+  notify: reload nginx
+
+
+- name: Verify nginx config
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  
+
+- name: Ensure certbot auto-renewal
+  systemd:
+    name: certbot.timer
+    enabled: yes
+    state: started
+
+
+- name: Ensure nginx is running
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: delete default
+  ansible.builtin.file:
+    state: absent
+    path: /etc/nginx/sites-enabled/default
+  notify: restart nginx
+
+
+
+    
