@@ -1,0 +1,27 @@
+- name: Install the latest version packages
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  loop:
+    - "{{ IPTABLES_PKGS_LIST }}"
+  tags:
+    - pkg
+
+- name: Update all packages
+  apt:
+    name: "*"
+    state: latest
+  tags:
+    - pkg
+
+
+- name: iptables config
+  ansible.builtin.template:
+    src: etc/iptables/rules.v4.j2
+    dest: /etc/iptables/rules.v4
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - restart iptables
