@@ -1,0 +1,7 @@
+---
+
+- name: all actions(we have only one host)
+  hosts: all
+  roles:
+    - iptables
+    - fail2ban
