@@ -7,6 +7,7 @@
     - fail2ban
     - nginx
     - backend
+    - frontend
   vars:
     DOMAIN: whisper.amcsui.ir
     WEB_ROOT: "/var/www/{{ DOMAIN }}"
