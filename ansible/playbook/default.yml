@@ -5,3 +5,9 @@
   roles:
     - iptables
     - fail2ban
+    - nginx
+    - backend
+  vars:
+    DOMAIN: whisper.amcsui.ir
+    WEB_ROOT: "/var/www/{{ DOMAIN }}"
+    EMAIL: aminmasoudi2003@gmail.com
