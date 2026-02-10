@@ -1,0 +1,87 @@
+- name: Install system dependencies
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+  loop: 
+    - "{{ FAST_API_DEP }}"
+
+
+- name: Ensure app group exists
+  group:
+    name: "{{ BACKEND_GROUP }}"
+
+- name: Ensure app user exists
+  user:
+    name: "{{ BACKEND_USER }}"
+    group: "{{ BACKEND_GROUP }}"
+    system: yes
+    shell: /usr/sbin/nologin
+
+- name: Ensure directory exists with right permissions
+  ansible.builtin.file:
+    path: "{{ APP_DIR }}"
+    owner: "{{ BACKEND_USER }}"
+    group: "{{ BACKEND_GROUP }}"
+    state: directory
+
+
+- name: clone git project
+  ansible.builtin.git:
+    repo: "{{ FAST_API_REPO }}"
+    dest: "{{ APP_DIR }}"
+  become: yes
+  become_user: "{{ BACKEND_USER }}"
+
+- name: create run directory
+  ansible.builtin.file:
+    path: "{{ APP_DIR }}/run"
+    owner: "{{ BACKEND_USER }}"
+    group: "{{ BACKEND_GROUP }}"
+    state:  directory
+
+- name: move env file
+  ansible.builtin.template:
+    src: opt/backend/app/env.j2
+    dest: /opt/backend/app/.env
+    owner: "{{ BACKEND_USER }}"
+    group: "{{ BACKEND_GROUP }}"
+    mode: "0440"
+
+
+- name: Create virtualenv
+  command: "python3 -m venv {{ VENV_DIR }}"
+  args:
+    creates: "{{ VENV_DIR }}/bin/activate"
+  become: yes
+  become_user: "{{ BACKEND_USER }}"
+
+- name: Install Python requirements
+  pip:
+    requirements: "{{ APP_DIR }}/requirements.txt"
+    virtualenv: "{{ VENV_DIR }}"
+    virtualenv_command: "python3 -m venv"
+  become: yes
+  become_user: "{{ BACKEND_USER }}"
+
+- name: Copy scripts
+  ansible.builtin.template:
+    src: opt/gunicorn_start.sh.j2
+    dest: /opt/gunicorn_start.sh
+    owner: "{{ BACKEND_USER }}"
+    group: "{{ BACKEND_GROUP }}"
+    mode: "0755"
+
+- name: Install systemd service
+  template:
+    src: etc/systemd/system/whisper_backend.service.j2
+    dest: /etc/systemd/system/whisper_backend.service
+  notify:
+    - Reload systemd
+    - Restart fastapi service
+
+- name: Enable and start service
+  systemd:
+    name: whisper_backend
+    enabled: yes
+    state: started
+  become: yes

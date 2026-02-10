@@ -1,0 +1,21 @@
+#!/bin/bash
+NAME="whisper_back"
+DIR={{ APP_DIR }}
+USER={{ BACKEND_USER }}
+GROUP={{ BACKEND_GROUP }}
+WORKERS=1  
+WORKER_CLASS=uvicorn.workers.UvicornWorker
+VENV="{{ VENV_DIR }}/bin/activate"
+BIND="unix:$DIR/run/gunicorn.sock"
+LOG_LEVEL="info"
+
+cd $DIR
+source $VENV
+exec gunicorn app.main:app \
+  --workers $WORKERS \
+  --worker-class $WORKER_CLASS \
+  --user=$USER \
+  --group=$GROUP \
+  --bind=$BIND \
+  --log-level=$LOG_LEVEL \
+  --log-file=-

@@ -1,0 +1,8 @@
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Restart fastapi service
+  systemd:
+    name: "whisper_backend.service"
+    state: restarted

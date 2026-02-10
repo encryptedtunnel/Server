@@ -1,0 +1,14 @@
+FAST_API_DEP:
+  - git
+  - python3
+  - python3-venv
+  - python3-pip
+  - build-essential
+  
+FAST_API_REPO: https://github.com/encryptedtunnel/backend.git
+
+APP_DIR: /opt/backend
+VENV_DIR: "{{ APP_DIR }}/.venv"
+
+BACKEND_USER: whisper_back
+BACKEND_GROUP: whisper_back
