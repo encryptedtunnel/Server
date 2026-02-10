@@ -1,0 +1,48 @@
+---
+
+
+- name: Install Node.js and npm
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    state: present
+  loop:
+    - nodejs
+    - npm
+
+- name: folder structure
+  file:
+    path: /opt/frontend
+    state: directory
+
+- name: clone git
+  git:
+    repo: https://github.com/encryptedtunnel/frontend.git
+    dest: /opt/frontend
+
+- name: install npm dependencies
+  ansible.builtin.command:
+    cmd: npm ci
+    chdir: /opt/frontend
+
+
+- name: build frontend react
+  ansible.builtin.command:
+    cmd: npm run build
+    chdir: /opt/frontend
+
+- name: copy files to www 
+  block:
+    - name: make sure folder exists
+      file:
+        path: "/var/www/{{ DOMAIN }}/html"
+        state:  directory
+
+    - name: copy files
+      copy:
+        src: /opt/frontend/dist/
+        dest: /var/www/{{ DOMAIN }}/html/
+        remote_src: true
+        owner: www-data
+        group: www-data
+
